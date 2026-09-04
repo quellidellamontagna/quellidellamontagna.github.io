@@ -2,7 +2,7 @@
 
 Diario di gruppo per le cime dell'Appennino sopra i 2000 m (264 vette).
 
-🗺 **Demo live:** [quetzalcoatl82.github.io/quellidellamontagna](https://quetzalcoatl82.github.io/quellidellamontagna/)
+🗺 **Demo live:** [quellidellamontagna.github.io](https://quellidellamontagna.github.io/)
 
 ---
 
