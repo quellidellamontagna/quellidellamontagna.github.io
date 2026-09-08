@@ -76,7 +76,7 @@ const state = {
   gruppoFilter: "",
   cimeSearch: "",
   personSort: "data",
-  maps: { main: null, mini: null },
+  maps: { main: null, mini: null, extra: [] },
   mapTimers: [],
 };
 
@@ -359,6 +359,14 @@ function destroyMaps() {
     state.maps.mini.remove();
     state.maps.mini = null;
   }
+  if (state.maps.extra && state.maps.extra.length) {
+    state.maps.extra.forEach((m) => {
+      try {
+        m.remove();
+      } catch (err) {}
+    });
+    state.maps.extra = [];
+  }
 }
 
 function hasLeaflet() {
@@ -431,8 +439,8 @@ function addBasemap(map) {
 
 function refreshBasemapTheme() {
   const dark = prefersDarkMap();
-  ["main", "mini"].forEach(function (key) {
-    const map = state.maps[key];
+  const maps = [state.maps.main, state.maps.mini].concat(state.maps.extra || []);
+  maps.forEach(function (map) {
     if (!map || !map._qdBasemap || map._qdBasemap.dark === dark) return;
     const prev = map._qdBasemap;
     if (map.hasLayer(prev.primary)) map.removeLayer(prev.primary);
@@ -483,15 +491,44 @@ function renderMainMap(cime) {
 }
 
 function renderMiniMap(cima) {
-  if (!hasLeaflet() || !document.getElementById("map-peak")) return;
-  const map = L.map("map-peak", { scrollWheelZoom: false, attributionControl: false });
+  renderPeaksMap([cima], "map-peak");
+}
+
+function renderPeaksMap(peaks, elementId, storeKey) {
+  const id = elementId || "map-peak";
+  if (!hasLeaflet() || !document.getElementById(id)) return null;
+  const list = (peaks || []).filter((c) => c && (c.lat || c.lon));
+  const map = L.map(id, { scrollWheelZoom: true, attributionControl: false });
   addBasemap(map);
-  map.setView([cima.lat, cima.lon], 11);
-  L.marker([cima.lat, cima.lon], {
-    icon: circleIcon(markerColor(climberCount(cima))),
-  }).addTo(map);
-  state.maps.mini = map;
+  const bounds = [];
+  for (const cima of list) {
+    const marker = L.marker([cima.lat, cima.lon], {
+      icon: circleIcon(markerColor(climberCount(cima))),
+      title: cima.nome,
+    }).addTo(map);
+    marker.bindPopup(peakPopup(cima));
+    bounds.push([cima.lat, cima.lon]);
+  }
+  if (bounds.length >= 2) {
+    L.polyline(bounds, {
+      color: "#b4482a",
+      weight: 3,
+      opacity: 0.85,
+      lineJoin: "round",
+      lineCap: "round",
+    }).addTo(map);
+  }
+  if (bounds.length === 1) map.setView(bounds[0], 12);
+  else if (bounds.length) map.fitBounds(bounds, { padding: [36, 36], maxZoom: 13 });
+  else map.setView([42.5, 13.5], 7);
+  if (storeKey === "extra") {
+    if (!state.maps.extra) state.maps.extra = [];
+    state.maps.extra.push(map);
+  } else {
+    state.maps.mini = map;
+  }
   refreshMap(map);
+  return map;
 }
 
 function parseHash() {
@@ -507,6 +544,7 @@ function setNav(view) {
     cime: "cime",
     cima: "cime",
     diario: "diario",
+    uscita: "diario",
     alpinisti: "alpinisti",
     alpinista: "alpinisti",
     confronta: "confronta",
@@ -743,6 +781,93 @@ function buildDiario() {
   return days;
 }
 
+function diaryPeakChip(c) {
+  return `<a class="chip" href="#/cima/${encodeURIComponent(c.id)}">${escapeHtml(c.nome)} · ${fmtNum(c.altezza_m)} m</a>`;
+}
+
+function uscitaHref(data) {
+  return `#/uscita/${encodeURIComponent(data)}`;
+}
+
+function findGiornoUscite(data) {
+  if (!data) return null;
+  return buildDiario().find((d) => d.data === data) || null;
+}
+
+function renderUscitaGroup(group, mapId) {
+  const peaks = group.peaks;
+  const people = group.people;
+  const maxH = Math.max(0, ...peaks.map((c) => c.altezza_m || 0));
+  const gruppi = [...new Set(peaks.map((c) => c.gruppo).filter(Boolean))];
+  const peakRows = peaks
+    .map(
+      (c) => `<a class="row" href="#/cima/${encodeURIComponent(c.id)}">
+        <div>
+          <div class="row-title">${escapeHtml(c.nome)}</div>
+          <div class="muted">${fmtNum(c.altezza_m)} m${c.gruppo ? " · " + escapeHtml(c.gruppo) : ""}</div>
+        </div>
+      </a>`
+    )
+    .join("");
+  const peopleRows = people
+    .map((e) => {
+      const mark = e.changed
+        ? `<span class="diary-mark diary-mark-up" title="Il totale è aumentato">↑</span>`
+        : `<span class="diary-mark diary-mark-eq" title="Stesso totale della data precedente">=</span>`;
+      return `<a class="row" href="#/alpinista/${encodeName(e.persona)}">
+        <div class="row-title">${escapeHtml(e.persona)}</div>
+        <div class="diary-count">${e.count} ${mark}</div>
+      </a>`;
+    })
+    .join("");
+  return {
+    html: `
+      <p class="lede">${peaks.length} ${peaks.length === 1 ? "cima" : "cime"} · ${people.length} ${people.length === 1 ? "alpinista" : "alpinisti"}${gruppi.length ? " · " + escapeHtml(gruppi.join(", ")) : ""}</p>
+      <div class="stats-row">
+        <div class="stat"><span>Cime</span><b>${peaks.length}</b></div>
+        <div class="stat"><span>Partecipanti</span><b>${people.length}</b></div>
+        <div class="stat"><span>Quota max</span><b>${fmtNum(maxH)} m</b></div>
+      </div>
+      <div id="${escapeHtml(mapId)}" class="map-mini map-outing"></div>
+      <h2 class="bar-block" style="margin-top:1.5rem">Cime</h2>
+      <div class="list">${peakRows}</div>
+      <h2 class="bar-block" style="margin-top:1.5rem">Partecipanti</h2>
+      <div class="list">${peopleRows}</div>`,
+    peaks,
+    mapId,
+  };
+}
+
+function viewUscita(data) {
+  const day = findGiornoUscite(data);
+  if (!day || !day.groups.length) {
+    appEl.innerHTML = `<section class="page">
+      <p class="kicker"><a href="#/diario">← Diario</a></p>
+      <h1 class="page-title">Uscita non trovata</h1>
+    </section>`;
+    return;
+  }
+  const blocks = day.groups.map((group, i) => renderUscitaGroup(group, "map-uscita-" + i));
+  const body = blocks
+    .map((b, i) => {
+      const head =
+        day.groups.length > 1
+          ? `<h2 class="bar-block" style="margin-top:${i ? "2rem" : "0"}">Uscita ${i + 1}</h2>`
+          : "";
+      return head + b.html;
+    })
+    .join("");
+  appEl.innerHTML = `
+    <section class="page">
+      <p class="kicker"><a href="#/diario">← Diario</a></p>
+      <h1 class="page-title">${fmtDate(day.data)}</h1>
+      ${body}
+    </section>`;
+  blocks.forEach((b, i) => {
+    renderPeaksMap(b.peaks, b.mapId, i === 0 ? "mini" : "extra");
+  });
+}
+
 function viewDiario() {
   const days = buildDiario();
   const totals = state.persone
@@ -758,56 +883,30 @@ function viewDiario() {
     .join("");
   const body = days
     .map((day) => {
-      const shared =
-        day.groups.length === 1 && day.groups[0].people.length === day.entries.length;
-      if (shared) {
-        const group = day.groups[0];
-        const peaks = group.peaks
-          .map(
-            (c) =>
-              `<a class="chip" href="#/cima/${encodeURIComponent(c.id)}">${escapeHtml(c.nome)}</a>`
-          )
-          .join("");
-        const people = group.people
-          .map((e) => {
-            const mark = e.changed
-              ? `<span class="diary-mark diary-mark-up" title="Il totale è aumentato">↑</span>`
-              : `<span class="diary-mark diary-mark-eq" title="Stesso totale della data precedente">=</span>`;
-            return `<article class="diary-entry">
-              <a class="row-title" href="#/alpinista/${encodeName(e.persona)}">${escapeHtml(e.persona)}</a>
-              <div class="diary-count">${e.count} ${mark}</div>
-            </article>`;
-          })
-          .join("");
-        return `<div class="diary-day">
-          <h2>${fmtDate(day.data)}</h2>
-          <div class="diary-peaks diary-peaks-shared">${peaks}</div>
-          ${people}
-        </div>`;
-      }
-      const cards = day.entries
-        .map((e) => {
-          const peaks = e.peaks
-            .map(
-              (c) =>
-                `<a class="chip" href="#/cima/${encodeURIComponent(c.id)}">${escapeHtml(c.nome)}</a>`
-            )
+      const href = uscitaHref(day.data);
+      const outings = day.groups
+        .map((group) => {
+          const peaks = group.peaks.map(diaryPeakChip).join("");
+          const people = group.people
+            .map((e) => {
+              const mark = e.changed
+                ? `<span class="diary-mark diary-mark-up" title="Il totale è aumentato">↑</span>`
+                : `<span class="diary-mark diary-mark-eq" title="Stesso totale della data precedente">=</span>`;
+              return `<article class="diary-entry">
+                <a class="row-title" href="#/alpinista/${encodeName(e.persona)}">${escapeHtml(e.persona)}</a>
+                <div class="diary-count">${e.count} ${mark}</div>
+              </article>`;
+            })
             .join("");
-          const mark = e.changed
-            ? `<span class="diary-mark diary-mark-up" title="Il totale è aumentato">↑</span>`
-            : `<span class="diary-mark diary-mark-eq" title="Stesso totale della data precedente">=</span>`;
-          return `<article class="diary-entry">
-            <div>
-              <a class="row-title" href="#/alpinista/${encodeName(e.persona)}">${escapeHtml(e.persona)}</a>
-              <div class="diary-peaks">${peaks}</div>
-            </div>
-            <div class="diary-count">${e.count} ${mark}</div>
-          </article>`;
+          return `<div class="diary-outing">
+            <div class="diary-peaks diary-peaks-shared">${peaks}</div>
+            ${people}
+          </div>`;
         })
         .join("");
       return `<div class="diary-day">
-        <h2>${fmtDate(day.data)}</h2>
-        ${cards}
+        <h2><a href="${href}">${fmtDate(day.data)}</a></h2>
+        ${outings}
       </div>`;
     })
     .join("");
@@ -1099,6 +1198,7 @@ function route() {
     if (view === "mappa") viewMappa();
     else if (view === "cime") viewCime();
     else if (view === "diario") viewDiario();
+    else if (view === "uscita") viewUscita(decodeURIComponent(parts[1] || ""));
     else if (view === "cima") viewCima(decodeURIComponent(parts[1] || ""));
     else if (view === "alpinisti") viewAlpinisti();
     else if (view === "alpinista") viewAlpinista(decodeURIComponent(parts[1] || ""));
@@ -1109,6 +1209,7 @@ function route() {
       );
     } else if (view === "stats") viewStats();
     else viewMappa();
+    window.scrollTo(0, 0);
   } catch (err) {
     showStatus("Errore in pagina: " + (err && err.message ? err.message : err), true);
   }
