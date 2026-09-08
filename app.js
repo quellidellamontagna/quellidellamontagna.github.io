@@ -302,6 +302,17 @@ function fmtDate(iso) {
   });
 }
 
+function fmtDateLong(iso) {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m) return iso;
+  return new Date(y, m - 1, d).toLocaleDateString("it-IT", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function fmtNum(n) {
   return Math.round(n).toLocaleString("it-IT");
 }
@@ -860,7 +871,7 @@ function viewUscita(data) {
   appEl.innerHTML = `
     <section class="page">
       <p class="kicker"><a href="#/diario">← Diario</a></p>
-      <h1 class="page-title">${fmtDate(day.data)}</h1>
+      <h1 class="page-title">${fmtDateLong(day.data)}</h1>
       ${body}
     </section>`;
   blocks.forEach((b, i) => {
