@@ -646,7 +646,7 @@ function viewCime() {
     : " nell'elenco ufficiale";
   appEl.innerHTML = `
     <section class="page">
-      <p class="kicker">264 cime sopra i 2000 m</p>
+      <p class="kicker">${state.cime.length} cime sopra i 2000 m</p>
       <h1 class="page-title">Cime</h1>
       <p class="lede">${lista.length} cime${scope}.</p>
       <div class="toolbar">
@@ -677,6 +677,19 @@ function peakIdNum(id) {
   return Number.isFinite(n) ? n : 0;
 }
 
+function peaksKey(peaks) {
+  return peaks
+    .map((c) => c.id)
+    .slice()
+    .sort()
+    .join("\0");
+}
+
+function personaIndex(nome) {
+  const i = state.persone.findIndex((p) => p.nome === nome);
+  return i < 0 ? 1e9 : i;
+}
+
 function buildDiario() {
   const all = [];
   for (const persona of state.persone) {
@@ -692,12 +705,8 @@ function buildDiario() {
     let prevCount = 0;
     for (let i = 0; i < dates.length; i++) {
       const data = dates[i];
-      const peaks = byDate.get(data).slice().sort((a, b) => {
-        const na = peakIdNum(a.id);
-        const nb = peakIdNum(b.id);
-        if (na && nb && na !== nb) return na - nb;
-        return a.nome.localeCompare(b.nome, "it");
-      });
+      // Ordine di inserimento (foglio Ascese), senza riordinare per id.
+      const peaks = byDate.get(data).slice();
       for (const c of peaks) seen.add(c.id);
       const count = seen.size;
       all.push({
@@ -710,20 +719,72 @@ function buildDiario() {
       prevCount = count;
     }
   }
-  all.sort((a, b) => b.data.localeCompare(a.data) || a.persona.localeCompare(b.persona, "it"));
+  all.sort((a, b) => {
+    const byDate = b.data.localeCompare(a.data);
+    if (byDate) return byDate;
+    return personaIndex(a.persona) - personaIndex(b.persona);
+  });
   const days = [];
   for (const entry of all) {
     const last = days[days.length - 1];
     if (!last || last.data !== entry.data) days.push({ data: entry.data, entries: [entry] });
     else last.entries.push(entry);
   }
+  for (const day of days) {
+    const groups = [];
+    for (const entry of day.entries) {
+      const key = peaksKey(entry.peaks);
+      const group = groups.find((g) => g.key === key);
+      if (group) group.people.push(entry);
+      else groups.push({ key, peaks: entry.peaks, people: [entry] });
+    }
+    day.groups = groups;
+  }
   return days;
 }
 
 function viewDiario() {
   const days = buildDiario();
+  const totals = state.persone
+    .map((p) => ({ nome: p.nome, n: personStats(p).n }))
+    .sort((a, b) => b.n - a.n || a.nome.localeCompare(b.nome, "it"));
+  const totalsHtml = totals
+    .map(
+      (p) => `<a class="card" href="#/alpinista/${encodeName(p.nome)}">
+        <h2>${escapeHtml(p.nome)}</h2>
+        <p class="muted">${p.n} / ${state.cime.length} cime</p>
+      </a>`
+    )
+    .join("");
   const body = days
     .map((day) => {
+      const shared =
+        day.groups.length === 1 && day.groups[0].people.length === day.entries.length;
+      if (shared) {
+        const group = day.groups[0];
+        const peaks = group.peaks
+          .map(
+            (c) =>
+              `<a class="chip" href="#/cima/${encodeURIComponent(c.id)}">${escapeHtml(c.nome)}</a>`
+          )
+          .join("");
+        const people = group.people
+          .map((e) => {
+            const mark = e.changed
+              ? `<span class="diary-mark diary-mark-up" title="Il totale è aumentato">↑</span>`
+              : `<span class="diary-mark diary-mark-eq" title="Stesso totale della data precedente">=</span>`;
+            return `<article class="diary-entry">
+              <a class="row-title" href="#/alpinista/${encodeName(e.persona)}">${escapeHtml(e.persona)}</a>
+              <div class="diary-count">${e.count} ${mark}</div>
+            </article>`;
+          })
+          .join("");
+        return `<div class="diary-day">
+          <h2>${fmtDate(day.data)}</h2>
+          <div class="diary-peaks diary-peaks-shared">${peaks}</div>
+          ${people}
+        </div>`;
+      }
       const cards = day.entries
         .map((e) => {
           const peaks = e.peaks
@@ -755,6 +816,7 @@ function viewDiario() {
       <p class="kicker">Cronaca</p>
       <h1 class="page-title">Diario</h1>
       <p class="lede">Dalla più recente. Più vette nello stesso giorno sono una sola uscita; il numero è il totale di cime distinte di quella persona.</p>
+      <div class="grid grid-cards" style="margin-bottom:1.75rem">${totalsHtml}</div>
       ${body || `<p class="empty">Nessuna ascesa con data.</p>`}
     </section>`;
 }
@@ -817,6 +879,7 @@ function viewAlpinista(nome) {
   }
   const s = personStats(persona);
   const sort = state.personSort;
+  const done = peakSet(persona);
   const rows = uniquePeaksOf(persona)
     .sort((a, b) => {
       if (sort === "quota") return b.cima.altezza_m - a.cima.altezza_m;
@@ -838,6 +901,19 @@ function viewAlpinista(nome) {
       </a>`;
     })
     .join("");
+  const missing = state.cime
+    .filter((c) => !done.has(c.id))
+    .sort((a, b) => peakIdNum(a.id) - peakIdNum(b.id) || b.altezza_m - a.altezza_m);
+  const missingRows = missing
+    .map(
+      (c) => `<a class="row" href="#/cima/${encodeURIComponent(c.id)}">
+        <div>
+          <div class="row-title">${escapeHtml(c.id)}. ${escapeHtml(c.nome)}</div>
+          <div class="muted">${fmtNum(c.altezza_m)} m${c.gruppo ? " · " + escapeHtml(c.gruppo) : ""}</div>
+        </div>
+      </a>`
+    )
+    .join("");
   const others = state.persone.filter((p) => p.nome !== persona.nome);
   const compareLinks = others
     .map((p) => `<a class="chip" href="#/confronta/${encodeName(persona.nome)}/${encodeName(p.nome)}">${escapeHtml(p.nome)}</a>`)
@@ -846,8 +922,9 @@ function viewAlpinista(nome) {
     <section class="page">
       <p class="kicker">Alpinista</p>
       <h1 class="page-title">${escapeHtml(persona.nome)}</h1>
+      <p class="lede"><a href="#cime-mancanti" id="to-missing">Cime mancanti (${missing.length})</a></p>
       <div class="stats-row">
-        <div class="stat"><span>Cime</span><b>${s.n}</b></div>
+        <div class="stat"><span>Cime</span><b>${s.n} / ${state.cime.length}</b></div>
         <div class="stat"><span>Gruppi</span><b>${s.nGruppi}</b></div>
         <div class="stat"><span>Prima ascesa</span><b>${fmtDate(s.prima)}</b></div>
         <div class="stat"><span>Ultima ascesa</span><b>${fmtDate(s.ultima)}</b></div>
@@ -857,10 +934,21 @@ function viewAlpinista(nome) {
         <button class="sort-btn${sort === "quota" ? " is-active" : ""}" data-sort="quota">Quota</button>
         <button class="sort-btn${sort === "gruppo" ? " is-active" : ""}" data-sort="gruppo">Gruppo</button>
       </div>
-      <div class="list">${rows}</div>
+      <div class="list">${rows || `<p class="empty">Nessuna cima salita.</p>`}</div>
+      <div class="bar-block" id="cime-mancanti" style="margin-top:1.5rem">
+        <h2>Cime mancanti (${missing.length})</h2>
+        <div class="list">${missingRows || `<p class="empty">Nessuna: elenco completo.</p>`}</div>
+      </div>
       <p class="lede" style="margin-top:1.5rem">Confronta con</p>
       <div class="chips">${compareLinks}</div>
     </section>`;
+  const jump = document.getElementById("to-missing");
+  if (jump) {
+    jump.addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("cime-mancanti")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
   appEl.querySelectorAll(".sort-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       state.personSort = btn.dataset.sort;

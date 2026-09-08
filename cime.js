@@ -1,4 +1,6 @@
-/* Elenco cime dell'Appennino sopra i 2000 m (264 vette). id = N° progressivo. */
+/* Elenco cime dell'Appennino sopra i 2000 m (265 vette).
+ * id 1–399: elenco gruppo 2000 (margine per aggiornamenti).
+ * id ≥400: cime aggiunte dal gruppo e considerate valide. */
 const CIME = [
   { id: "1", nome: "Monte Corno Grande, vetta occidentale", gruppo: "Gran Sasso", altezza_m: 2912, lat: 42.46961, lon: 13.56539 },
   { id: "2", nome: "Monte Corno Grande, vetta orientale", gruppo: "Gran Sasso", altezza_m: 2903, lat: 42.47217, lon: 13.57084 },
@@ -264,4 +266,6 @@ const CIME = [
   { id: "262", nome: "Cima di Iaccio dei Montoni", gruppo: "Velino Sirente", altezza_m: 2083, lat: 42.16476, lon: 13.44883 },
   { id: "263", nome: "Cima dei Monti di Bagno", gruppo: "Velino Sirente", altezza_m: 2073, lat: 42.17271, lon: 13.34182 },
   { id: "264", nome: "Costa Stellata", gruppo: "Velino Sirente", altezza_m: 2067, lat: 42.26603, lon: 13.43143 },
+  /* Cime aggiunte dal gruppo (id da 400) */
+  { id: "400", nome: "Cima Zen", gruppo: "Majella", altezza_m: 2139, lat: 42.132418, lon: 14.112772 },
 ];
