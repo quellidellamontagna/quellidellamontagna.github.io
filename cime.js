@@ -1,4 +1,4 @@
-/* Elenco cime dell'Appennino sopra i 2000 m (266 vette).
+/* Elenco cime dell'Appennino sopra i 2000 m (267 vette).
  * id 1–399: elenco gruppo 2000 (margine per aggiornamenti).
  * id ≥400: cime aggiunte dal gruppo e considerate valide. */
 const CIME = [
@@ -269,4 +269,5 @@ const CIME = [
   /* Cime aggiunte dal gruppo (id da 400) */
   { id: "400", nome: "Cima Zen", gruppo: "Majella", altezza_m: 2139, lat: 42.132418, lon: 14.112772 },
   { id: "401", nome: "I 3 Bauzi", gruppo: "Velino Sirente", altezza_m: 2146, lat: 42.2571621, lon: 13.431287 },
+  { id: "402", nome: "Colle dell'Orso", gruppo: "Velino Sirente", altezza_m: 2163, lat: 42.1723866, lon: 13.384632 },
 ];
