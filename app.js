@@ -937,13 +937,34 @@ function viewCima(id) {
     appEl.innerHTML = `<section class="page"><h1 class="page-title">Cima non trovata</h1></section>`;
     return;
   }
-  const people = cima.ascese
-    .map(
-      (a) => `<a class="row" href="#/alpinista/${encodeName(a.alpinista)}">
-        <div class="row-title">${escapeHtml(a.alpinista)}</div>
-        <div class="muted">${fmtDate(a.data)}</div>
-      </a>`
-    )
+  const byDate = new Map();
+  for (const a of cima.ascese) {
+    const data = a.data || "";
+    if (!byDate.has(data)) byDate.set(data, []);
+    byDate.get(data).push(a);
+  }
+  const dates = [...byDate.keys()].sort((a, b) => b.localeCompare(a));
+  const people = dates
+    .map((data) => {
+      const list = byDate
+        .get(data)
+        .slice()
+        .sort((a, b) => personaIndex(a.alpinista) - personaIndex(b.alpinista));
+      const rows = list
+        .map(
+          (a) => `<a class="row" href="#/alpinista/${encodeName(a.alpinista)}">
+            <div class="row-title">${escapeHtml(a.alpinista)}</div>
+          </a>`
+        )
+        .join("");
+      const title = data
+        ? `<h3 class="cima-ascent-date"><a href="${uscitaHref(data)}">${fmtDate(data)}</a></h3>`
+        : `<h3 class="cima-ascent-date">Senza data</h3>`;
+      return `<div class="cima-ascent-day">
+        ${title}
+        <div class="list">${rows}</div>
+      </div>`;
+    })
     .join("");
   appEl.innerHTML = `
     <section class="page">
@@ -957,7 +978,7 @@ function viewCima(id) {
       </div>
       <div id="map-peak" class="map-mini"></div>
       <h2 class="bar-block" style="margin-top:1.5rem">Chi l'ha salita</h2>
-      <div class="list">${people || `<p class="empty">Nessuna ascesa registrata.</p>`}</div>
+      ${people || `<p class="empty">Nessuna ascesa registrata.</p>`}
     </section>`;
   if (cima.lat || cima.lon) renderMiniMap(cima);
 }
