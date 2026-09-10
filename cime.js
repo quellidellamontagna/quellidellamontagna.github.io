@@ -282,5 +282,5 @@ const CIME = [
   { id: "412", nome: "Monte La Piella, anticima est", gruppo: "Tosco-Emiliano", altezza_m: 2070, lat: 44.276984, lon: 10.408881 },
   { id: "413", nome: "Cima Val di Corte", gruppo: "PNALM", altezza_m: 2002, lat: 41.82265704403557, lon: 13.854460962766865 },
   { id: "414", nome: "Coppo del Ginepro", gruppo: "PNALM", altezza_m: 2017, lat: 41.82410183191163, lon: 13.849701483902678 },
-  { id: "415", nome: "Cima Lanciano", gruppo: "PNALM", altezza_m: 2088, lat: 41.69743326631365, lon: 13.922135275292721 },
+  { id: "415", nome: "Cima Lanciano", gruppo: "PNALM", altezza_m: 2088, lat: 41.709015, lon: 13.937475 },
 ];
