@@ -1,4 +1,4 @@
-/* Elenco cime dell'Appennino sopra i 2000 m (273 vette).
+/* Elenco cime dell'Appennino sopra i 2000 m (277 vette).
  * id 1–399: elenco gruppo 2000 (margine per aggiornamenti).
  * id ≥400: cime aggiunte dal gruppo e considerate valide. */
 const CIME = [
@@ -276,4 +276,8 @@ const CIME = [
   { id: "406", nome: "Metuccetta", gruppo: "PNALM", altezza_m: 2161, lat: 41.674815, lon: 13.960882 },
   { id: "407", nome: "Sella di Serra le Gravare", gruppo: "PNALM", altezza_m: 2141, lat: 41.802555, lon: 13.991675 },
   { id: "408", nome: "Cima Scalone", gruppo: "PNALM", altezza_m: 2156, lat: 41.835826949650894, lon: 13.950195964028769 },
+  { id: "409", nome: "Quelli della Montagna", gruppo: "Laga", altezza_m: 2104, lat: 42.578927, lon: 13.40007 },
+  { id: "410", nome: "Serra del Carapale", gruppo: "PNALM", altezza_m: 2126, lat: 41.884973, lon: 13.843201 },
+  { id: "411", nome: "Punta della Peltrara", gruppo: "PNALM", altezza_m: 2201, lat: 41.898845, lon: 13.824608 },
+  { id: "412", nome: "Monte La Piella, anticima est", gruppo: "Tosco-Emiliano", altezza_m: 2070, lat: 44.276984, lon: 10.408881 },
 ];
