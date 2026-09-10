@@ -1,4 +1,4 @@
-/* Elenco cime dell'Appennino sopra i 2000 m (277 vette).
+/* Elenco cime dell'Appennino sopra i 2000 m (280 vette).
  * id 1–399: elenco gruppo 2000 (margine per aggiornamenti).
  * id ≥400: cime aggiunte dal gruppo e considerate valide. */
 const CIME = [
@@ -280,4 +280,7 @@ const CIME = [
   { id: "410", nome: "Serra del Carapale", gruppo: "PNALM", altezza_m: 2126, lat: 41.884973, lon: 13.843201 },
   { id: "411", nome: "Punta della Peltrara", gruppo: "PNALM", altezza_m: 2201, lat: 41.898845, lon: 13.824608 },
   { id: "412", nome: "Monte La Piella, anticima est", gruppo: "Tosco-Emiliano", altezza_m: 2070, lat: 44.276984, lon: 10.408881 },
+  { id: "413", nome: "Cima Val di Corte", gruppo: "PNALM", altezza_m: 2002, lat: 41.82265704403557, lon: 13.854460962766865 },
+  { id: "414", nome: "Coppo del Ginepro", gruppo: "PNALM", altezza_m: 2017, lat: 41.82410183191163, lon: 13.849701483902678 },
+  { id: "415", nome: "Cima Lanciano", gruppo: "PNALM", altezza_m: 2088, lat: 41.69743326631365, lon: 13.922135275292721 },
 ];
