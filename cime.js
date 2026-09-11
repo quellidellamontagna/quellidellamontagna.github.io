@@ -1,4 +1,4 @@
-/* Elenco cime dell'Appennino sopra i 2000 m (283 vette).
+/* Elenco cime dell'Appennino sopra i 2000 m (284 vette).
  * id 1–399: elenco gruppo 2000 (margine per aggiornamenti).
  * id ≥400: cime aggiunte dal gruppo e considerate valide. */
 const CIME = [
@@ -286,4 +286,5 @@ const CIME = [
   { id: "416", nome: "I Cantari S. Giovanni Battista", gruppo: "Simbruini Ernici", altezza_m: 2088, lat: 41.894183, lon: 13.381051 },
   { id: "417", nome: "I Cantari, anticima", gruppo: "Simbruini Ernici", altezza_m: 2050, lat: 41.896501, lon: 13.378458 },
   { id: "418", nome: "Monte Cagno, anticima", gruppo: "Velino Sirente", altezza_m: 2147, lat: 42.245231, lon: 13.465516 },
+  { id: "419", nome: "Monte Marsicano, cima sud-est", gruppo: "PNALM", altezza_m: 2252, lat: 41.8033, lon: 13.8692 },
 ];
