@@ -1,6 +1,6 @@
 # Quelli della Montagna
 
-Diario di gruppo per le cime dell'Appennino sopra i 2000 m (284 vette).
+Diario di gruppo per le cime dell'Appennino sopra i 2000 m (285 vette).
 
 🗺 **Demo live:** [quellidellamontagna.github.io](https://quellidellamontagna.github.io/)
 
@@ -10,7 +10,7 @@ Diario di gruppo per le cime dell'Appennino sopra i 2000 m (284 vette).
 
 | Sezione | Descrizione |
 |---|---|
-| **Mappa** | Tutte le 284 cime su mappa topografica (Esri World Topo Map), con marker colorati in base al numero di alpinisti che le hanno salite (0–5). Filtri per alpinista e gruppo montuoso. |
+| **Mappa** | Tutte le 285 cime su mappa topografica (Esri World Topo Map), con marker colorati in base al numero di alpinisti che le hanno salite (0–5). Filtri per alpinista e gruppo montuoso. |
 | **Cime** | Elenco completo delle vette con quota, gruppo e numero di salite registrate. Ricerca e ordinamento per colonna. |
 | **Diario** | Uscite raggruppate per persona e data, con conteggio cumulativo delle cime uniche raggiunte. |
 | **Alpinisti** | Profilo di ogni alpinista: cime salite, gruppi toccati, prima e ultima uscita. |
