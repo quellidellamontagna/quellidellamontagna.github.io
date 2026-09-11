@@ -506,15 +506,31 @@ a.card:hover { border-color: var(--forest); }
 }
 
 .award {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding: 0.95rem 1rem;
+  padding: 0.95rem 2.6rem 0.95rem 1rem;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   color: inherit;
   box-shadow: var(--shadow);
+}
+
+.award-badge {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 1.85rem;
+  height: 1.85rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--status-bg);
+  border: 1px solid var(--line);
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .award-winners {
@@ -538,6 +554,11 @@ a.card:hover { border-color: var(--forest); }
   line-height: 1.25;
   text-decoration: none;
   color: inherit;
+  padding: 0.35rem 0;
+}
+
+.award-winner:not(:last-child) {
+  border-bottom: 1px solid var(--line);
 }
 
 .award-winner:hover { color: var(--forest); }

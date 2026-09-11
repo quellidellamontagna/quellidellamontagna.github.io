@@ -1445,7 +1445,7 @@ function computeAwards() {
     }
   }
 
-  const order = ["collezionista", "free-solo", "mai-soli", "serial-repeater"];
+  const order = ["collezionista", "free-solo", "mai-soli", "cima-festosa"];
   awards.sort((a, b) => {
     const ia = order.indexOf(a.id);
     const ib = order.indexOf(b.id);
@@ -1458,6 +1458,16 @@ function computeAwards() {
 
 function renderAwards(awards) {
   if (!awards.length) return "";
+  const emoji = {
+    collezionista: "🏔️",
+    "free-solo": "🐺",
+    "mai-soli": "🪢",
+    "cima-festosa": "🏠",
+    "best-buddies": "🥂",
+    "strana-coppia": "🎭",
+    "serial-repeater": "🔁",
+    ombra: "👤",
+  };
   const cards = awards
     .map((a) => {
       const winners = (a.winners || [])
@@ -1466,7 +1476,9 @@ function renderAwards(awards) {
             `<a class="award-winner" href="${w.href}">${escapeHtml(w.label)}</a>`
         )
         .join("");
+      const badge = emoji[a.id] || "🏅";
       return `<article class="award">
+        <span class="award-badge" aria-hidden="true">${badge}</span>
         <span class="award-title">${escapeHtml(a.title)}</span>
         <span class="award-blurb">${escapeHtml(a.blurb)}</span>
         <div class="award-winners">${winners}</div>
