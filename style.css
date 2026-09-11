@@ -557,6 +557,16 @@ a.card:hover { border-color: var(--forest); }
   padding: 0.35rem 0;
 }
 
+.award-note {
+  display: block;
+  font-family: "Source Sans 3", system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+  margin-top: 0.15rem;
+}
+
 .award-winner:not(:last-child) {
   border-bottom: 1px solid var(--line);
 }

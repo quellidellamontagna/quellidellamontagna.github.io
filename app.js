@@ -1424,21 +1424,38 @@ function computeAwards() {
     }
   }
 
-  // Cima festosa: più ascese distinte (ogni data = 1, da soli o in gruppo)
+  // Come casa: 1ª visita = 0; ogni ritorno (+2ª, 3ª, …) vale 1, da soli o in gruppo
   {
     const items = state.cime.map((c) => {
-      const dates = new Set(c.ascese.map((a) => a.data).filter(Boolean));
-      return { cima: c, n: dates.size };
+      const byPerson = new Map();
+      for (const a of c.ascese) {
+        if (!a.alpinista || !a.data) continue;
+        if (!byPerson.has(a.alpinista)) byPerson.set(a.alpinista, new Set());
+        byPerson.get(a.alpinista).add(a.data);
+      }
+      const returners = [];
+      let n = 0;
+      for (const [nome, dates] of byPerson) {
+        if (dates.size < 2) continue;
+        const returns = dates.size - 1;
+        n += returns;
+        returners.push({ nome, visits: dates.size, returns });
+      }
+      returners.sort((a, b) => b.returns - a.returns || a.nome.localeCompare(b.nome, "it"));
+      return { cima: c, n, returners };
     });
     const { score, winners } = pickTopAll(items, (x) => x.n);
     if (winners.length && score > 0) {
       awards.push({
         id: "cima-festosa",
         title: "Come casa",
-        blurb: "Più ascese distinte (da soli o in gruppo)",
-        detail: `${score} ${score === 1 ? "ascesa" : "ascese"}`,
+        blurb: "Più alpinisti che ci tornano",
+        detail: `${score} ${score === 1 ? "punto" : "punti"}`,
         winners: winners.map((w) => ({
           label: w.cima.nome,
+          note: w.returners
+            .map((r) => `${r.nome} ×${r.visits} (${r.returns} ${r.returns === 1 ? "ritorno" : "ritorni"})`)
+            .join(" · "),
           href: `#/cima/${encodeURIComponent(w.cima.id)}`,
         })),
       });
@@ -1471,10 +1488,12 @@ function renderAwards(awards) {
   const cards = awards
     .map((a) => {
       const winners = (a.winners || [])
-        .map(
-          (w) =>
-            `<a class="award-winner" href="${w.href}">${escapeHtml(w.label)}</a>`
-        )
+        .map((w) => {
+          const note = w.note
+            ? `<span class="award-note">${escapeHtml(w.note)}</span>`
+            : "";
+          return `<a class="award-winner" href="${w.href}">${escapeHtml(w.label)}${note}</a>`;
+        })
         .join("");
       const badge = emoji[a.id] || "🏅";
       return `<article class="award">
