@@ -265,7 +265,7 @@ const CIME = [
   { id: "261", nome: "Costone della Cerasa", gruppo: "Velino Sirente", altezza_m: 2119, lat: 42.14306, lon: 13.45126 },
   { id: "262", nome: "Cima di Iaccio dei Montoni", gruppo: "Velino Sirente", altezza_m: 2083, lat: 42.16476, lon: 13.44883 },
   { id: "263", nome: "Cima dei Monti di Bagno", gruppo: "Velino Sirente", altezza_m: 2073, lat: 42.17271, lon: 13.34182 },
-  { id: "264", nome: "Costa Stellata", gruppo: "Velino Sirente", altezza_m: 2067, lat: 42.26603, lon: 13.43143 },
+  { id: "264", nome: "Costa Stellata", gruppo: "Velino Sirente", altezza_m: 2067, lat: 42.1278, lon: 13.4382 },
   /* Cime aggiunte dal gruppo (id da 400) */
   { id: "400", nome: "Cima Zen", gruppo: "Majella", altezza_m: 2139, lat: 42.132418, lon: 14.112772 },
   { id: "401", nome: "I 3 Bauzi", gruppo: "Velino Sirente", altezza_m: 2146, lat: 42.2571621, lon: 13.431287 },
@@ -274,7 +274,7 @@ const CIME = [
   { id: "404", nome: "Balcone delle Gravare", gruppo: "PNALM", altezza_m: 2087, lat: 41.805112, lon: 14.031909 },
   { id: "405", nome: "Sella di Cima delle Gravare", gruppo: "PNALM", altezza_m: 2015, lat: 41.811049, lon: 14.017714 },
   { id: "406", nome: "Metuccetta", gruppo: "PNALM", altezza_m: 2161, lat: 41.674815, lon: 13.960882 },
-  { id: "407", nome: "Sella di Serra le Gravare", gruppo: "PNALM", altezza_m: 2141, lat: 41.802555, lon: 13.991675 },
+  { id: "407", nome: "Cima di Serra le Gravare", gruppo: "PNALM", altezza_m: 2141, lat: 41.802555, lon: 13.991675 },
   { id: "408", nome: "Cima Scalone", gruppo: "PNALM", altezza_m: 2156, lat: 41.835826949650894, lon: 13.950195964028769 },
   { id: "409", nome: "Quelli della Montagna", gruppo: "Laga", altezza_m: 2104, lat: 42.578927, lon: 13.40007 },
   { id: "410", nome: "Serra del Carapale", gruppo: "PNALM", altezza_m: 2126, lat: 41.884973, lon: 13.843201 },
