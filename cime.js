@@ -1,4 +1,4 @@
-/* Elenco cime dell'Appennino sopra i 2000 m (285 vette).
+/* Elenco cime dell'Appennino sopra i 2000 m (286 vette).
  * id 1–399: elenco gruppo 2000 (margine per aggiornamenti).
  * id ≥400: cime aggiunte dal gruppo e considerate valide. */
 const CIME = [
@@ -288,4 +288,5 @@ const CIME = [
   { id: "418", nome: "Monte Cagno, anticima", gruppo: "Velino Sirente", altezza_m: 2147, lat: 42.245231, lon: 13.465516 },
   { id: "419", nome: "Monte Marsicano, cima sud-est", gruppo: "PNALM", altezza_m: 2252, lat: 41.8033, lon: 13.8692 },
   { id: "420", nome: "Costa Stellata, anticima nord", gruppo: "Velino Sirente", altezza_m: 2151, lat: 42.1331, lon: 13.4328 },
+  { id: "421", nome: "Cima della Cera Sella", gruppo: "Velino Sirente", altezza_m: 2143, lat: 42.1415, lon: 13.4320 },
 ];
