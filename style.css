@@ -499,6 +499,60 @@ a.card:hover { border-color: var(--forest); }
 .bar-fill.alt { background: var(--enamel); }
 .bar-fill.gold { background: var(--gold); }
 
+.awards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.award {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.95rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: inherit;
+  box-shadow: var(--shadow);
+}
+
+.award-winners {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.award-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--enamel);
+}
+
+.award-winner {
+  font-family: Fraunces, Georgia, serif;
+  font-weight: 650;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-decoration: none;
+  color: inherit;
+}
+
+.award-winner:hover { color: var(--forest); }
+
+.award-detail {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.award-blurb {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
 .year-block { margin: 0 0 1.25rem; }
 
 .year-block h3 {

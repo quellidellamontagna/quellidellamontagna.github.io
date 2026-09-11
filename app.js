@@ -1170,6 +1170,316 @@ function barChart(title, rows, cls) {
   return `<div class="bar-block"><h2>${escapeHtml(title)}</h2>${bars}</div>`;
 }
 
+function peopleKey(names) {
+  return names.slice().sort((a, b) => a.localeCompare(b, "it")).join("\0");
+}
+
+function pickTopAll(items, scoreFn) {
+  let best = -Infinity;
+  const winners = [];
+  for (const item of items) {
+    const score = scoreFn(item);
+    if (!Number.isFinite(score)) continue;
+    if (score > best) {
+      best = score;
+      winners.length = 0;
+      winners.push(item);
+    } else if (score === best) {
+      winners.push(item);
+    }
+  }
+  return { score: best, winners };
+}
+
+function pickBottomAll(items, scoreFn) {
+  let best = Infinity;
+  const winners = [];
+  for (const item of items) {
+    const score = scoreFn(item);
+    if (!Number.isFinite(score)) continue;
+    if (score < best) {
+      best = score;
+      winners.length = 0;
+      winners.push(item);
+    } else if (score === best) {
+      winners.push(item);
+    }
+  }
+  return { score: best, winners };
+}
+
+function computeAwards() {
+  const awards = [];
+  const persone = state.persone;
+  if (!persone.length) return awards;
+
+  const onPeakDay = new Map();
+  for (const p of persone) {
+    for (const a of p.ascese) {
+      if (!a.cima || !a.data) continue;
+      const key = a.data + "\0" + a.cima.id;
+      if (!onPeakDay.has(key)) onPeakDay.set(key, { data: a.data, cima: a.cima, people: new Set() });
+      onPeakDay.get(key).people.add(p.nome);
+    }
+  }
+
+  // Free Solo
+  const soloPeaks = new Map();
+  for (const entry of onPeakDay.values()) {
+    if (entry.people.size !== 1) continue;
+    const nome = [...entry.people][0];
+    if (!soloPeaks.has(nome)) soloPeaks.set(nome, new Set());
+    soloPeaks.get(nome).add(entry.cima.id);
+  }
+  const soloItems = [...soloPeaks.entries()].map(([nome, set]) => ({ nome, n: set.size }));
+  {
+    const { score, winners } = pickTopAll(soloItems, (x) => x.n);
+    if (winners.length && score > 0) {
+      awards.push({
+        id: "free-solo",
+        title: "Free Solo",
+        blurb: "Più cime salite in solitaria",
+        detail: `${score} cime`,
+        winners: winners.map((w) => ({
+          label: w.nome,
+          href: `#/alpinista/${encodeName(w.nome)}`,
+        })),
+      });
+    }
+  }
+
+  // Cordate
+  const cordate = new Map();
+  for (const day of buildDiario()) {
+    for (const group of day.groups) {
+      const names = group.people.map((e) => e.persona);
+      if (names.length < 2) continue;
+      const key = peopleKey(names);
+      if (!cordate.has(key)) cordate.set(key, { names, dates: new Set() });
+      cordate.get(key).dates.add(day.data);
+    }
+  }
+  const cordateList = [...cordate.values()];
+
+  // Best Buddies: max uscite; in pari merito tutte le cordate
+  {
+    const { score, winners } = pickTopAll(cordateList, (c) => c.dates.size);
+    if (winners.length && score > 0) {
+      awards.push({
+        id: "best-buddies",
+        title: "Best Buddies",
+        blurb: "La cordata con più uscite insieme",
+        detail: `${score} ${score === 1 ? "uscita" : "uscite"}`,
+        winners: winners.map((w) => ({
+          label: w.names.join(", "),
+          href: "#/diario",
+        })),
+      });
+    }
+  }
+
+  // La Strana Coppia: min uscite tra le coppie
+  {
+    const pairs = cordateList.filter((c) => c.names.length === 2);
+    const { score, winners } = pickBottomAll(pairs, (c) => c.dates.size);
+    if (winners.length && Number.isFinite(score)) {
+      awards.push({
+        id: "strana-coppia",
+        title: "La Strana Coppia",
+        blurb: "Insieme, ma quasi mai",
+        detail: `${score} ${score === 1 ? "uscita" : "uscite"} insieme`,
+        winners: winners.map((w) => ({
+          label: w.names.join(" & "),
+          href: `#/confronta/${encodeName(w.names[0])}/${encodeName(w.names[1])}`,
+        })),
+      });
+    }
+  }
+
+  // Collezionista
+  {
+    const ranked = persone.map((p) => ({ nome: p.nome, n: personStats(p).n }));
+    const { score, winners } = pickTopAll(ranked, (x) => x.n);
+    if (winners.length && score > 0) {
+      awards.push({
+        id: "collezionista",
+        title: "Collezionista",
+        blurb: "Più cime distinte in assoluto",
+        detail: `${score} cime`,
+        winners: winners.map((w) => ({
+          label: w.nome,
+          href: `#/alpinista/${encodeName(w.nome)}`,
+        })),
+      });
+    }
+  }
+
+  // Serial repeater: più volte sulla stessa cima; pari merito ordinati per cime replicate
+  {
+    const items = [];
+    for (const p of persone) {
+      const counts = new Map();
+      for (const a of p.ascese) {
+        if (!a.cima || !a.data) continue;
+        const id = a.cima.id;
+        if (!counts.has(id)) counts.set(id, new Set());
+        counts.get(id).add(a.data);
+      }
+      let maxN = 0;
+      let nRep = 0;
+      for (const dates of counts.values()) {
+        const n = dates.size;
+        if (n >= 2) nRep += 1;
+        if (n > maxN) maxN = n;
+      }
+      if (maxN >= 2) items.push({ nome: p.nome, maxN, nRep });
+    }
+    const { score, winners } = pickTopAll(items, (x) => x.maxN);
+    winners.sort((a, b) => b.nRep - a.nRep || a.nome.localeCompare(b.nome, "it"));
+    if (winners.length && score >= 2) {
+      awards.push({
+        id: "serial-repeater",
+        title: "Serial Repeater",
+        blurb: "Più volte sulla stessa cima",
+        detail: `${score} volte`,
+        winners: winners.map((w) => ({
+          label: `${w.nome} · ${w.nRep} ${w.nRep === 1 ? "cima replicata" : "cime replicate"}`,
+          href: `#/alpinista/${encodeName(w.nome)}`,
+        })),
+      });
+    }
+  }
+
+  // Mai soli
+  {
+    const items = [];
+    for (const p of persone) {
+      const peaks = peakSet(p);
+      if (peaks.size < 3) continue;
+      const withCompany = new Set();
+      for (const entry of onPeakDay.values()) {
+        if (!peaks.has(entry.cima.id) || !entry.people.has(p.nome)) continue;
+        if (entry.people.size >= 2) withCompany.add(entry.cima.id);
+      }
+      items.push({
+        nome: p.nome,
+        pct: withCompany.size / peaks.size,
+        withN: withCompany.size,
+        total: peaks.size,
+      });
+    }
+    const { score, winners } = pickTopAll(items, (x) => x.pct);
+    if (winners.length && score > 0) {
+      awards.push({
+        id: "mai-soli",
+        title: "Mai soli",
+        blurb: "Quota più alta di cime fatte in compagnia",
+        detail: `${Math.round(score * 100)}%`,
+        winners: winners.map((w) => ({
+          label: `${w.nome} · ${w.withN}/${w.total}`,
+          href: `#/alpinista/${encodeName(w.nome)}`,
+        })),
+      });
+    }
+  }
+
+  // L'ombra
+  {
+    const items = [];
+    for (const a of persone) {
+      const setA = peakSet(a);
+      if (setA.size < 3) continue;
+      let bestB = null;
+      for (const b of persone) {
+        if (a.nome === b.nome) continue;
+        const setB = peakSet(b);
+        let shared = 0;
+        for (const id of setA) if (setB.has(id)) shared += 1;
+        const pct = shared / setA.size;
+        if (!bestB || pct > bestB.pct || (pct === bestB.pct && shared > bestB.shared)) {
+          bestB = { nome: b.nome, shared, pct };
+        }
+      }
+      if (!bestB || bestB.shared < 1) continue;
+      items.push({
+        nome: a.nome,
+        other: bestB.nome,
+        shared: bestB.shared,
+        pct: bestB.pct,
+        total: setA.size,
+      });
+    }
+    const { score, winners } = pickTopAll(items, (x) => x.pct);
+    if (winners.length && score > 0) {
+      awards.push({
+        id: "ombra",
+        title: "L'ombra",
+        blurb: "Quasi sempre sulle stesse cime di qualcun altro",
+        detail: `${Math.round(score * 100)}%`,
+        winners: winners.map((w) => ({
+          label: `${w.nome} → ${w.other} · ${w.shared}/${w.total}`,
+          href: `#/confronta/${encodeName(w.nome)}/${encodeName(w.other)}`,
+        })),
+      });
+    }
+  }
+
+  // Cima festosa: più ascese distinte (ogni data = 1, da soli o in gruppo)
+  {
+    const items = state.cime.map((c) => {
+      const dates = new Set(c.ascese.map((a) => a.data).filter(Boolean));
+      return { cima: c, n: dates.size };
+    });
+    const { score, winners } = pickTopAll(items, (x) => x.n);
+    if (winners.length && score > 0) {
+      awards.push({
+        id: "cima-festosa",
+        title: "Come casa",
+        blurb: "Più ascese distinte (da soli o in gruppo)",
+        detail: `${score} ${score === 1 ? "ascesa" : "ascese"}`,
+        winners: winners.map((w) => ({
+          label: w.cima.nome,
+          href: `#/cima/${encodeURIComponent(w.cima.id)}`,
+        })),
+      });
+    }
+  }
+
+  const order = ["collezionista", "free-solo", "mai-soli", "serial-repeater"];
+  awards.sort((a, b) => {
+    const ia = order.indexOf(a.id);
+    const ib = order.indexOf(b.id);
+    const ra = ia < 0 ? order.length : ia;
+    const rb = ib < 0 ? order.length : ib;
+    return ra - rb;
+  });
+  return awards;
+}
+
+function renderAwards(awards) {
+  if (!awards.length) return "";
+  const cards = awards
+    .map((a) => {
+      const winners = (a.winners || [])
+        .map(
+          (w) =>
+            `<a class="award-winner" href="${w.href}">${escapeHtml(w.label)}</a>`
+        )
+        .join("");
+      return `<article class="award">
+        <span class="award-title">${escapeHtml(a.title)}</span>
+        <span class="award-blurb">${escapeHtml(a.blurb)}</span>
+        <div class="award-winners">${winners}</div>
+        <span class="award-detail">${escapeHtml(a.detail)}</span>
+      </article>`;
+    })
+    .join("");
+  return `<div class="bar-block">
+    <h2>Awards</h2>
+    <div class="awards-grid">${cards}</div>
+  </div>`;
+}
+
 function viewStats() {
   const ranked = state.persone
     .map((p) => ({ p, s: personStats(p) }))
@@ -1205,11 +1515,13 @@ function viewStats() {
   const gruppiBars = [...byGruppo.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "it"))
     .map((entry) => ({ label: entry[0], value: entry[1], display: String(entry[1]) }));
+  const awardsHtml = renderAwards(computeAwards());
   appEl.innerHTML = `
     <section class="page">
       <p class="kicker">Diario</p>
       <h1 class="page-title">Statistiche</h1>
       <p class="lede">${state.cime.length} cime, ${state.persone.length} alpinisti, ${state.cime.reduce((n, c) => n + c.ascese.length, 0)} ascese.</p>
+      ${awardsHtml}
       ${barChart(
         "Cime per persona",
         ranked.map((r) => ({ label: r.p.nome, value: r.s.n, display: String(r.s.n) })),
