@@ -1,6 +1,6 @@
 const CONFIG = {
-  spreadsheetId: "1J1CghIK4VHPEWc_XL1gyZKi3Wl2nWuJ4hp9gfsR_qHQ", // ID del foglio tra /d/ e /edit. Vuoto = ascese di esempio.
-  sheets: { ascese: "Ascese", alpinisti: "Alpinisti" },
+  spreadsheetId: "1J1CghIK4VHPEWc_XL1gyZKi3Wl2nWuJ4hp9gfsR_qHQ", // ID del foglio tra /d/ e /edit. Vuoto = dati di esempio.
+  sheets: { ascese: "Ascese", alpinisti: "Alpinisti", cime: "Cime" },
   // sessionStorage non ha scadenza nativa: la simuliamo con savedAt + questo TTL.
   cacheTtlMs: 60 * 60 * 1000,
 };
@@ -27,22 +27,6 @@ const MOCK_ASCESE = [
     { cima_id: "9", alpinista: "2", data: "2022-08-28" },
     { cima_id: "9", alpinista: "3", data: "2024-07-07" },
     { cima_id: "10", alpinista: "5", data: "2023-07-16" },
-    { cima_id: "11", alpinista: "5", data: "2024-09-01" },
-    { cima_id: "12", alpinista: "4", data: "2022-07-24" },
-    { cima_id: "13", alpinista: "1", data: "2016-08-21" },
-    { cima_id: "13", alpinista: "2", data: "2018-07-14" },
-    { cima_id: "13", alpinista: "4", data: "2020-08-09" },
-    { cima_id: "13", alpinista: "3", data: "2020-08-09" },
-    { cima_id: "14", alpinista: "4", data: "2025-08-02" },
-    { cima_id: "15", alpinista: "2", data: "2023-08-20" },
-    { cima_id: "16", alpinista: "4", data: "2024-07-28" },
-    { cima_id: "16", alpinista: "5", data: "2024-07-28" },
-    { cima_id: "17", alpinista: "1", data: "2025-07-06" },
-    { cima_id: "18", alpinista: "2", data: "2024-07-20" },
-    { cima_id: "19", alpinista: "3", data: "2021-07-03" },
-    { cima_id: "19", alpinista: "5", data: "2021-07-03" },
-    { cima_id: "20", alpinista: "1", data: "2023-07-09" },
-    { cima_id: "20", alpinista: "2", data: "2023-07-09" },
     { cima_id: "1", alpinista: "1", data: "2025-08-16" },
     { cima_id: "2", alpinista: "1", data: "2025-08-16" },
     { cima_id: "1", alpinista: "2", data: "2025-08-16" },
@@ -55,10 +39,6 @@ const MOCK_ASCESE = [
     { cima_id: "10", alpinista: "4", data: "2024-06-15" },
     { cima_id: "9", alpinista: "5", data: "2024-06-15" },
     { cima_id: "10", alpinista: "5", data: "2024-06-15" },
-    { cima_id: "18", alpinista: "1", data: "2023-09-02" },
-    { cima_id: "20", alpinista: "1", data: "2023-09-02" },
-    { cima_id: "18", alpinista: "2", data: "2023-09-02" },
-    { cima_id: "20", alpinista: "2", data: "2023-09-02" },
 ];
 
 const MOCK_ALPINISTI = [
@@ -67,6 +47,19 @@ const MOCK_ALPINISTI = [
   { id: "3", nome: "Dario Spina" },
   { id: "4", nome: "Giulia Neri" },
   { id: "5", nome: "Irene Costa" },
+];
+
+const MOCK_CIME = [
+  { id: "1", nome: "Monte Corno Grande, vetta occidentale", gruppo: "Gran Sasso", altezza_m: 2912, lat: 42.46961, lon: 13.56539 },
+  { id: "2", nome: "Monte Corno Grande, vetta orientale", gruppo: "Gran Sasso", altezza_m: 2903, lat: 42.47217, lon: 13.57084 },
+  { id: "3", nome: "Monte Corno Grande, vetta centrale", gruppo: "Gran Sasso", altezza_m: 2893, lat: 42.47108, lon: 13.5697 },
+  { id: "4", nome: "Torrione Cambi", gruppo: "Gran Sasso", altezza_m: 2875, lat: 42.47056, lon: 13.56892 },
+  { id: "5", nome: "Monte Corno Piccolo", gruppo: "Gran Sasso", altezza_m: 2655, lat: 42.47934, lon: 13.55999 },
+  { id: "6", nome: "Pizzo d'Intermesoli", gruppo: "Gran Sasso", altezza_m: 2635, lat: 42.47279, lon: 13.52704 },
+  { id: "7", nome: "Monte Corvo", gruppo: "Gran Sasso", altezza_m: 2623, lat: 42.47932, lon: 13.49331 },
+  { id: "8", nome: "Punta dei Due", gruppo: "Gran Sasso", altezza_m: 2608, lat: 42.47555, lon: 13.56002 },
+  { id: "9", nome: "Monte Camicia", gruppo: "Gran Sasso", altezza_m: 2564, lat: 42.43926, lon: 13.71835 },
+  { id: "10", nome: "Monte Prena", gruppo: "Gran Sasso", altezza_m: 2561, lat: 42.44238, lon: 13.68321 },
 ];
 
 const state = {
@@ -86,6 +79,19 @@ const statusEl = document.getElementById("status");
 function num(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
+}
+
+function parseCoord(value, formatted) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value && !/^Date\(/.test(value)) {
+    const n = Number(value.trim().replace(",", "."));
+    if (Number.isFinite(n)) return n;
+  }
+  if (typeof formatted === "string" && formatted && !/^\d+\.\d{2}\.\d{2}$/.test(formatted)) {
+    const n = Number(formatted.trim().replace(",", "."));
+    if (Number.isFinite(n)) return n;
+  }
+  return "";
 }
 
 function parseGvizDate(value, formatted) {
@@ -122,6 +128,7 @@ function rowsFromGviz(json) {
       const cell = row.c && row.c[i];
       obj[col] = cell && cell.v != null ? cell.v : "";
       if (col === "data") obj[col] = parseGvizDate(cell && cell.v, cell && cell.f);
+      if (col === "lat" || col === "lon") obj[col] = parseCoord(cell && cell.v, cell && cell.f);
     });
     return obj;
   });
@@ -1590,12 +1597,8 @@ function route() {
   }
 }
 
-function catalogCime() {
-  return typeof CIME !== "undefined" ? CIME : [];
-}
-
 function asceseCacheKey() {
-  return "cime-ascese:" + CONFIG.spreadsheetId;
+  return "qdm-drive:v2:" + CONFIG.spreadsheetId;
 }
 
 function readAsceseCache() {
@@ -1603,7 +1606,13 @@ function readAsceseCache() {
     const raw = sessionStorage.getItem(asceseCacheKey());
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!parsed || !Array.isArray(parsed.ascese) || !Array.isArray(parsed.alpinisti) || !parsed.savedAt) {
+    if (
+      !parsed ||
+      !Array.isArray(parsed.cime) ||
+      !Array.isArray(parsed.ascese) ||
+      !Array.isArray(parsed.alpinisti) ||
+      !parsed.savedAt
+    ) {
       return null;
     }
     return parsed;
@@ -1612,11 +1621,11 @@ function readAsceseCache() {
   }
 }
 
-function writeAsceseCache(ascese, alpinisti) {
+function writeAsceseCache(cime, ascese, alpinisti) {
   try {
     sessionStorage.setItem(
       asceseCacheKey(),
-      JSON.stringify({ savedAt: Date.now(), ascese: ascese, alpinisti: alpinisti })
+      JSON.stringify({ savedAt: Date.now(), cime: cime, ascese: ascese, alpinisti: alpinisti })
     );
   } catch (err) {}
 }
@@ -1646,23 +1655,30 @@ async function fetchDriveTables() {
   const alpinistiP = fetchSheet(CONFIG.sheets.alpinisti).catch(function () {
     return [];
   });
+  const cime = await fetchSheet(CONFIG.sheets.cime);
+  if (!cime.length) throw new Error("Foglio Cime vuoto");
   const ascese = await asceseP;
   const alpinisti = await alpinistiP;
-  return { ascese, alpinisti };
+  return { cime, ascese, alpinisti };
+}
+
+function joinDriveTables(tables) {
+  const data = joinData(tables.cime, tables.ascese, tables.alpinisti);
+  data.fromSheetCime = !!(tables.cime && tables.cime.length);
+  return data;
 }
 
 async function loadData() {
-  const cime = catalogCime();
   if (!CONFIG.spreadsheetId) {
-    return joinData(cime, MOCK_ASCESE, MOCK_ALPINISTI);
+    return joinData(MOCK_CIME, MOCK_ASCESE, MOCK_ALPINISTI);
   }
   const cached = readAsceseCache();
   if (cached && cacheIsFresh(cached)) {
-    return joinData(cime, cached.ascese, cached.alpinisti);
+    return joinDriveTables(cached);
   }
   const tables = await fetchDriveTables();
-  writeAsceseCache(tables.ascese, tables.alpinisti);
-  return joinData(cime, tables.ascese, tables.alpinisti);
+  writeAsceseCache(tables.cime, tables.ascese, tables.alpinisti);
+  return joinDriveTables(tables);
 }
 
 async function refreshAsceseIfStale() {
@@ -1674,8 +1690,8 @@ async function refreshAsceseIfStale() {
   }
   try {
     const tables = await fetchDriveTables();
-    writeAsceseCache(tables.ascese, tables.alpinisti);
-    applyJoined(joinData(catalogCime(), tables.ascese, tables.alpinisti));
+    writeAsceseCache(tables.cime, tables.ascese, tables.alpinisti);
+    applyJoined(joinDriveTables(tables));
     route();
   } catch (err) {
     if (cached) return;
@@ -1683,20 +1699,27 @@ async function refreshAsceseIfStale() {
   }
 }
 
+function driveStatus(data) {
+  if (!data.fromSheetCime) {
+    return "Foglio Cime vuoto o illeggibile.";
+  }
+  return "";
+}
+
 async function init() {
   try {
     const data = await loadData();
     applyJoined(data);
     if (!CONFIG.spreadsheetId) {
-      showStatus("Ascese di esempio. Per i dati veri incolla l'ID del foglio (schede Ascese e Alpinisti) in CONFIG.spreadsheetId.");
+      showStatus("Dati di esempio. Per i dati veri incolla l'ID del foglio (schede Cime, Ascese e Alpinisti) in CONFIG.spreadsheetId.");
     } else {
-      showStatus("");
+      showStatus(driveStatus(data), !data.fromSheetCime);
       const cached = readAsceseCache();
       if (cached) scheduleCacheRefresh(cached.savedAt);
     }
   } catch (err) {
-    applyJoined(joinData(catalogCime(), MOCK_ASCESE, MOCK_ALPINISTI));
-    showStatus("Foglio non leggibile (" + err.message + "). Mostro le ascese di esempio.", true);
+    applyJoined(joinData(MOCK_CIME, MOCK_ASCESE, MOCK_ALPINISTI));
+    showStatus("Foglio non leggibile (" + err.message + "). Mostro i dati di esempio.", true);
   }
   window.addEventListener("hashchange", route);
   watchMapTheme();

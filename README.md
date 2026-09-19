@@ -19,7 +19,15 @@ Diario di gruppo per le cime dell'Appennino sopra i 2000 m (286 vette).
 
 ## Dati
 
-I dati delle ascensioni vengono letti da un **Google Sheet** pubblico con due fogli:
+I dati vengono letti da un **Google Sheet** pubblico con tre fogli:
+
+### Foglio `Cime`
+
+| id | nome | gruppo | altezza_m | lat | lon |
+|---|---|---|---|---|---|
+| 1 | Monte Corno Grande, vetta occidentale | Gran Sasso | 2912 | 42.46961 | 13.56539 |
+
+`lat` e `lon` devono essere in formato **Numero** (non data/ora).
 
 ### Foglio `Alpinisti`
 
@@ -35,11 +43,11 @@ I dati delle ascensioni vengono letti da un **Google Sheet** pubblico con due fo
 | 1 | 1 | 2024-08-12 |
 | 3 | 2 | 2024-07-19 |
 
-- `cima_id` corrisponde all'ID numerico nell'elenco delle cime (embedded in `cime.js`).
+- `cima_id` corrisponde all'`id` del foglio Cime.
 - `alpinista` è l'`id` numerico dal foglio Alpinisti.
 - `data` in formato `YYYY-MM-DD`.
 
-Se non viene configurato alcun `spreadsheetId` in `app.js`, l'app usa dati di esempio integrati.
+Se non viene configurato alcun `spreadsheetId` in `app.js`, l'app usa 10 cime, 5 alpinisti e ascese di esempio. Con il foglio configurato, le vette arrivano dalla scheda `Cime`.
 
 ## Configurazione
 
@@ -48,12 +56,12 @@ In testa a `app.js`:
 ```js
 const CONFIG = {
   spreadsheetId: "",   // ID del Google Sheet (la parte tra /d/ e /edit nell'URL)
-  sheets: { ascese: "Ascese", alpinisti: "Alpinisti" },
+  sheets: { ascese: "Ascese", alpinisti: "Alpinisti", cime: "Cime" },
   cacheTtlMs: 60 * 60 * 1000,  // cache sessionStorage: 1 ora
 };
 ```
 
-1. Crea un Google Sheet con i due fogli descritti sopra.
+1. Crea un Google Sheet con i tre fogli descritti sopra.
 2. Pubblicalo: **File → Condividi → Pubblica sul Web** (oppure rendi il foglio accessibile a "Chiunque abbia il link").
 3. Copia l'ID dall'URL e incollalo in `spreadsheetId`.
 
